@@ -41,6 +41,7 @@ public class Main {
 		final CommandLine line = parseCommandLine(args);
 		
 		final boolean dryRun = line.hasOption("-n");
+		final boolean deleteSplitFiles = line.hasOption("-d");
 		final Path path = createWorkingPath(line);
 
 		logger.trace("Dry-run: " + dryRun);
@@ -48,12 +49,12 @@ public class Main {
 
 		final Multimap<Path, Path> filesToJoin = findFilesToJoin(path);
 		
-		mergeFiles(filesToJoin, dryRun);
+		mergeFiles(filesToJoin, dryRun, deleteSplitFiles);
 		
 		return;
 	}
 
-	public static void mergeFiles(final Multimap<Path, Path> filesToJoin, final boolean dryRun) throws IOException {
+	public static void mergeFiles(final Multimap<Path, Path> filesToJoin, final boolean dryRun, final boolean deleteSplitFiles) throws IOException {
 		for (final Path wholeFilePath : filesToJoin.keySet()) {
 			logger.trace("Rebuilding file {}", wholeFilePath);
 			
@@ -64,8 +65,13 @@ public class Main {
 					logger.trace("Reading file {}", partialFilePath);
 					
 					try (final InputStream in = new BufferedInputStream(Files.newInputStream(partialFilePath))) {
-						if (!dryRun) 
+						if (!dryRun) {
 							ByteStreams.copy(in, out);
+						}
+					}
+					if (deleteSplitFiles && !dryRun) {
+						logger.trace("Deleting file {}", partialFilePath);
+						Files.delete(partialFilePath);
 					}
 				}
 			}
@@ -119,8 +125,9 @@ public class Main {
 	}
 
 	public static CommandLine parseCommandLine(final String[] args) throws ParseException {
-		final Options cliOptions = new Options();		
+		final Options cliOptions = new Options();
 		cliOptions.addOption("n", false, "dry-run");
+		cliOptions.addOption("d", false, "delete split files");
 		
 		final CommandLine line = new BasicParser().parse(cliOptions, args);
 		return line;
