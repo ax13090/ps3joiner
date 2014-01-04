@@ -84,7 +84,8 @@ public class Main {
 		Files.walkFileTree(path, visitor);
 		final List<Path> foundPaths = visitor.foundPaths();
 		for (final Path foundPath : foundPaths) {
-			splitToWholeFileMapping.put(foundPath, findOriginalFileFromSplitFile(foundPath));
+			final Path originalFilePath = findOriginalFileFromSplitFile(foundPath);
+			splitToWholeFileMapping.put(foundPath, originalFilePath);
 		}
 		
 		final Multimap<Path, Path> multimap = TreeMultimap.create();
