@@ -7,10 +7,15 @@
 
 package ps3joiner;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,26 +25,53 @@ import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
+import com.google.common.io.ByteStreams;
 
 public class Main {
 	
+	private static final Logger logger = LoggerFactory.getLogger(Main.class);
+
 	public static void main(final String[] args) throws ParseException, IOException {
 		final CommandLine line = parseCommandLine(args);
 		
 		final boolean dryRun = line.hasOption("-n");
 		final Path path = createWorkingPath(line);
 
-		LoggerFactory.getLogger(Main.class).trace("Dry-run: " + dryRun);
-		LoggerFactory.getLogger(Main.class).trace("Working directory: " + path);
+		logger.trace("Dry-run: " + dryRun);
+		logger.trace("Working directory: " + path);
 
 		final Multimap<Path, Path> filesToJoin = findFilesToJoin(path);
 		
+		mergeFiles(filesToJoin, dryRun);
+		
 		return;
+	}
+
+	public static void mergeFiles(final Multimap<Path, Path> filesToJoin, final boolean dryRun) throws IOException {
+		for (final Path wholeFilePath : filesToJoin.keySet()) {
+			logger.trace("Rebuilding file {}", wholeFilePath);
+			
+			final Collection<Path> partialFiles = filesToJoin.get(wholeFilePath);
+
+			try (final OutputStream out = new BufferedOutputStream(Files.newOutputStream(wholeFilePath))) {
+				for (final Path partialFilePath : partialFiles) {
+					logger.trace("Reading file {}", partialFilePath);
+					
+					try (final InputStream in = new BufferedInputStream(Files.newInputStream(partialFilePath))) {
+						if (!dryRun) 
+							ByteStreams.copy(in, out);
+					}
+				}
+			}
+
+			logger.trace("Closing file {}", wholeFilePath);
+		}
 	}
 
 	/**
