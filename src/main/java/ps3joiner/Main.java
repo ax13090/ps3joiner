@@ -7,6 +7,9 @@
 
 package ps3joiner;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -19,9 +22,14 @@ public class Main {
 		final CommandLine line = parseCommandLine(args);
 		
 		final boolean dryRun = line.hasOption("-n");
-		
+		final Path path = createWorkingPath(line);
 
 		LoggerFactory.getLogger(Main.class).trace("Dry-run: " + dryRun);
+	}
+
+	public static Path createWorkingPath(final CommandLine line) {
+		final Path path = Paths.get(line.getArgs()[0]);
+		return path;
 	}
 
 	public static CommandLine parseCommandLine(final String[] args) throws ParseException {

@@ -9,9 +9,14 @@ package ps3joiner;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
+import java.nio.file.Path;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.junit.Test;
+
+import com.google.common.io.Files;
 
 public class CommandLineParserTest {
 
@@ -27,5 +32,12 @@ public class CommandLineParserTest {
 		assertFalse(line.hasOption("-n"));
 	}
 	
-	
+	@Test
+	public void testWorkingPath() throws ParseException {
+		final File tmpDir = Files.createTempDir();
+		final CommandLine line = Main.parseCommandLine(new String[] {"-n", tmpDir.getAbsolutePath()});
+		final Path foundPath = Main.createWorkingPath(line);
+		
+		assertEquals(tmpDir.getAbsoluteFile(), foundPath.toAbsolutePath().toFile());
+	}
 }
