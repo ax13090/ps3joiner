@@ -103,7 +103,7 @@ public class Main {
 		final String nameWithoutExtension = com.google.common.io.Files.getNameWithoutExtension(splitFilePath.toAbsolutePath().toString());
 	
 		final String replacedExtension = extension.replaceAll("666\\d+", "");
-		return Paths.get(nameWithoutExtension, replacedExtension);
+		return Paths.get(splitFilePath.getParent().toString(), nameWithoutExtension, replacedExtension);
 	}
 	
 	public static Path createWorkingPath(final CommandLine line) {
@@ -115,7 +115,7 @@ public class Main {
 		else
 			path = Paths.get(".");
 		
-		return path;
+		return path.toAbsolutePath();
 	}
 
 	public static CommandLine parseCommandLine(final String[] args) throws ParseException {
